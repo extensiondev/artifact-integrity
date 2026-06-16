@@ -1,0 +1,89 @@
+{
+  "name": "@extension.dev/artifact-integrity",
+  "description": "Trust what you ship: download and verify browser extension artifacts (zip structure, manifest, metadata) and emit a deterministic JSON report for CI release gates.",
+  "keywords": [
+    "browser-extension",
+    "chrome-extension",
+    "artifact",
+    "artifact-integrity",
+    "verification",
+    "integrity-check",
+    "checksum",
+    "release-gate",
+    "security",
+    "supply-chain",
+    "provenance",
+    "ci",
+    "github-actions",
+    "manifest-v3"
+  ],
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "Cezar Augusto",
+    "email": "boss@cezaraugusto.net",
+    "url": "https://cezaraugusto.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/extensiondev/artifact-integrity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/extensiondev/artifact-integrity/issues"
+  },
+  "homepage": "https://github.com/extensiondev/artifact-integrity#readme",
+  "engines": {
+    "node": ">=20.18"
+  },
+  "packageManager": "pnpm@10.19.0",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.js",
+      "require": "./dist/module.js"
+    }
+  },
+  "bin": {
+    "extension-artifact-integrity": "bin/runner.cjs"
+  },
+  "main": "./dist/module.js",
+  "types": "./dist/module.d.ts",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "format": "prettier --write \"**/*.{ts,tsx,md,js,json}\"",
+    "lint": "eslint .",
+    "watch": "rslib build --watch",
+    "compile": "rslib build",
+    "test": "vitest run",
+    "build": "pnpm run compile",
+    "prepublishOnly": "pnpm run test && pnpm run compile"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.12"
+  },
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@rslib/core": "^0.9.2",
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.15.30",
+    "eslint": "^9.32.0",
+    "globals": "^16.0.0",
+    "np": "^10.2.0",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.39.0",
+    "vitest": "3.2.2"
+  }
+}
