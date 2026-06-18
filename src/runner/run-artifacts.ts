@@ -3,51 +3,14 @@ import * as path from "node:path";
 import * as os from "node:os";
 import * as crypto from "node:crypto";
 import AdmZip from "adm-zip";
-import type { RunArtifactsInput, RunArtifactsResult } from "./types";
-
-type DeclaredDigest = { hex?: string; b64?: string };
-
-function parseExpectedHex(value?: string): DeclaredDigest | null {
-  const v = String(value || "").trim().toLowerCase();
-  return /^[a-f0-9]{64}$/.test(v) ? { hex: v } : null;
-}
-
-function parseDeclaredDigest(meta: unknown): DeclaredDigest | null {
-  if (!meta || typeof meta !== "object") return null;
-  const m = meta as Record<string, unknown>;
-  const nested = (key: string) => {
-    const obj = m[key];
-    return obj && typeof obj === "object"
-      ? (obj as Record<string, unknown>).sha256
-      : undefined;
-  };
-  for (const c of [m.sha256, m.checksum, nested("artifact"), nested("package")]) {
-    if (typeof c === "string" && /^[a-f0-9]{64}$/i.test(c.trim())) {
-      return { hex: c.trim().toLowerCase() };
-    }
-  }
-  if (typeof m.integrity === "string") {
-    const match = m.integrity.trim().match(/^sha256-([A-Za-z0-9+/=]+)$/);
-    if (match && match[1]) return { b64: match[1] };
-  }
-  return null;
-}
-
-function parseManifestDigest(manifest: unknown): DeclaredDigest | null {
-  if (!manifest || typeof manifest !== "object") return null;
-  const files = (manifest as Record<string, unknown>).files;
-  const zip =
-    files && typeof files === "object"
-      ? (files as Record<string, unknown>).zip
-      : undefined;
-  const sha =
-    zip && typeof zip === "object"
-      ? (zip as Record<string, unknown>).sha256
-      : undefined;
-  return typeof sha === "string" && /^[a-f0-9]{64}$/i.test(sha.trim())
-    ? { hex: sha.trim().toLowerCase() }
-    : null;
-}
+import type { RunArtifactsInput, RunArtifactsResult } from "../types";
+import {
+  parseExpectedHex,
+  parseDeclaredDigest,
+  parseManifestDigest,
+} from "./digest";
+import { fetchBytes, fetchJson } from "./http";
+import { enrichCheck } from "./checks";
 
 function normalizeBaseUrl(u: string) {
   return String(u || "").replace(/\/+$/, "");
@@ -64,110 +27,6 @@ function errorMessage(e: unknown) {
   }
 
   return String(e);
-}
-
-function enrichCheck(
-  check: RunArtifactsResult["checks"][number],
-): RunArtifactsResult["checks"][number] {
-  switch (check.id) {
-    case "download-package":
-      return {
-        ...check,
-        title: "Download package",
-        level: "fail",
-        summary: "Package archive is reachable and downloadable.",
-        remediation: "Ensure the build artifact exists and the URL is correct.",
-        expected: "HTTP 200 and valid bytes",
-        actual: check.ok ? "Downloaded" : check.detail,
-      };
-    case "zip-structure":
-      return {
-        ...check,
-        title: "Zip structure",
-        level: "fail",
-        summary: "Package is a valid zip archive.",
-        remediation: "Ensure the artifact is a valid zip file.",
-        expected: "Valid zip archive",
-        actual: check.ok ? "Zip parsed" : check.detail,
-      };
-    case "manifest-present":
-      return {
-        ...check,
-        title: "Manifest present",
-        level: "fail",
-        summary: "manifest.json exists at the archive root.",
-        remediation:
-          "Place manifest.json at the root of the extension package.",
-        expected: "/manifest.json at zip root",
-        actual: check.ok ? "Found" : check.detail,
-      };
-    case "download-metadata":
-      return {
-        ...check,
-        title: "Download metadata",
-        level: "fail",
-        summary: "Browser metadata JSON is reachable and valid JSON.",
-        remediation: "Publish <browser>.json with build metadata.",
-        expected: "HTTP 200 and valid JSON",
-        actual: check.ok ? "Downloaded" : check.detail,
-      };
-    case "package-integrity":
-      return {
-        title: "Package integrity",
-        summary: "Package bytes match the declared SHA-256.",
-        remediation:
-          "Republish the artifact, or fix the declared digest in metadata.",
-        level: check.level ?? "fail",
-        ...check,
-      };
-    default:
-      return check;
-  }
-}
-
-function authHeaders(token?: string): Record<string, string> {
-  const trimmed = String(token || "").trim();
-  return trimmed ? { Authorization: `Bearer ${trimmed}` } : {};
-}
-
-async function fetchBytes(url: string, timeoutMs: number, token?: string) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: authHeaders(token),
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    }
-
-    const buf = Buffer.from(await res.arrayBuffer());
-
-    return buf;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-async function fetchJson(url: string, timeoutMs: number, token?: string) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: authHeaders(token),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
 }
 
 export async function runArtifacts(
