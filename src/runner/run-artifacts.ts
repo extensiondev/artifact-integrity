@@ -35,16 +35,14 @@ export async function runArtifacts(
   const timeoutMs = input.timeoutMs ?? 15_000;
   const base = normalizeBaseUrl(input.artifactsBaseUrl);
   const ext = extForBrowser(input.browser);
-  const packageUrl = `${base}/${encodeURIComponent(input.owner)}/${encodeURIComponent(
-    input.repo,
-  )}/${encodeURIComponent(input.sha)}/${input.browser}.${ext}`;
-  const metadataUrl = `${base}/${encodeURIComponent(input.owner)}/${encodeURIComponent(
-    input.repo,
-  )}/${encodeURIComponent(input.sha)}/${input.browser}.json`;
 
-  const manifestUrl = `${base}/${encodeURIComponent(input.owner)}/${encodeURIComponent(
+  const buildBase = `${base}/${encodeURIComponent(input.owner)}/${encodeURIComponent(
     input.repo,
-  )}/${encodeURIComponent(input.sha)}/artifact-manifest/${input.browser}.json`;
+  )}/builds/${encodeURIComponent(input.sha)}`;
+  const packageUrl = `${buildBase}/${input.browser}.${ext}`;
+  const metadataUrl = `${buildBase}/${input.browser}.json`;
+
+  const manifestUrl = `${buildBase}/artifact-manifest/${input.browser}.json`;
 
   const checks: RunArtifactsResult["checks"] = [];
 
