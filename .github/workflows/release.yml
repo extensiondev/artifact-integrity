@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -76,8 +77,6 @@ jobs:
 
       - name: Check published version
         shell: bash
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           PKG="${{ steps.meta.outputs.name }}"
           VER="${{ steps.validate.outputs.version }}"
@@ -113,12 +112,17 @@ jobs:
           git push
           git push origin "$TAG"
 
-      - name: Publish to npm
+      # OIDC trusted publishing needs npm >= 11.5.1; pin the newest npm so we
+      # never depend on which patch of npm the Node runtime happens to ship.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+
+      # No NODE_AUTH_TOKEN: npm authenticates via the GitHub OIDC token
+      # (id-token: write above) against the trusted publisher configured on
+      # npmjs.com for this repo/workflow. This repo is private, so npm skips
+      # provenance (which needs a public repo); NPM_CONFIG_PROVENANCE=false
+      # keeps that deterministic. Make the repo public to get provenance.
+      - name: Publish to npm via trusted publishing
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN secret is missing." >&2
-            exit 1
-          fi
-          npm publish --access ${{ steps.meta.outputs.publish_access }} --tag latest --no-git-checks --ignore-scripts
+          NPM_CONFIG_PROVENANCE: "false"
+        run: npm publish --access ${{ steps.meta.outputs.publish_access }} --tag latest --ignore-scripts
