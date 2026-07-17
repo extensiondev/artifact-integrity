@@ -1,4 +1,4 @@
-[npm-version-image]: https://img.shields.io/npm/v/@extension.dev/artifact-integrity
+[npm-version-image]: https://img.shields.io/npm/v/@extension.dev/artifact-integrity?color=26FFB8
 [npm-version-url]: https://www.npmjs.com/package/@extension.dev/artifact-integrity
 [action-image]: https://github.com/extensiondev/artifact-integrity/actions/workflows/ci.yml/badge.svg?branch=main
 [action-url]: https://github.com/extensiondev/artifact-integrity/actions
