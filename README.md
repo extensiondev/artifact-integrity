@@ -163,13 +163,13 @@ Maxed-out JSON example:
     {
       "id": "manifest-present",
       "ok": false,
-      "detail": "Missing /tmp/artifact-integrity-XXXX/manifest.json",
+      "detail": "manifest_version must be 2 or 3 (found 1)",
       "title": "Manifest present",
       "level": "fail",
-      "summary": "manifest.json exists at the archive root.",
-      "remediation": "Place manifest.json at the root of the extension package.",
-      "expected": "/manifest.json at zip root",
-      "actual": "Missing /manifest.json"
+      "summary": "manifest.json exists at the archive root and declares manifest_version 2 or 3.",
+      "remediation": "Place a valid manifest.json (manifest_version 2 or 3) at the root of the extension package.",
+      "expected": "Valid /manifest.json at zip root",
+      "actual": "manifest_version must be 2 or 3 (found 1)"
     },
     {
       "id": "download-metadata",
@@ -198,10 +198,10 @@ Maxed-out JSON example:
 
 ## The extension.dev stack
 
-| Package                                                           | Use it to                                                       |
-| ----------------------------------------------------------------- | --------------------------------------------------------------- |
-| [`@extension.dev/mcp`](https://github.com/extensiondev/mcp)       | Give AI agents tools to build, run, and debug extensions        |
-| [`@extension.dev/skill`](https://github.com/extensiondev/skill)   | Teach agents the cross-browser rules and silent-failure gotchas |
+| Package                                                                        | Use it to                                                             |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp)       | Give AI agents tools to build, run, and debug extensions              |
+| [`@extension.dev/skill`](https://www.npmjs.com/package/@extension.dev/skill)   | Teach agents the cross-browser rules and silent-failure gotchas       |
 
 All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.
 
