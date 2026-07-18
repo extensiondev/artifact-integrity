@@ -8,8 +8,17 @@
 # @extension.dev/artifact-integrity
 
 The release gate for browser extensions. Download an artifact, verify its zip
-structure, manifest, and metadata, and emit a deterministic JSON report your
-CI can gate on: exit 0 ships, exit 1 does not.
+structure, manifest, metadata, and content digest, and emit a deterministic
+JSON report your CI can gate on: exit 0 ships, exit 1 does not.
+
+Content integrity is the check that makes this a trust boundary and not just a
+well-formedness lint: the downloaded bytes are hashed with SHA-256 and compared
+against a declared digest, so a registry or CDN that serves tampered but valid
+looking bytes fails the gate. The digest is resolved, in order, from an explicit
+`expectedSha256` you pin in CI, then the artifact manifest's `files.zip.sha256`,
+then a `sha256` or SRI `integrity` field in the co-published metadata. When none
+is declared the check is informational and reports the computed hash so you can
+record or pin it.
 
 Verification tooling is only worth trusting when you can read it; this
 package is open source for exactly that reason.
@@ -72,6 +81,11 @@ const result = await runArtifacts({
   repo: "my-extension",
   sha: "abc123",
   browser: "chrome",
+  // Optional. Pin the expected package digest to make content integrity a hard
+  // gate; without it the check falls back to the manifest/metadata digest.
+  expectedSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  // Optional bearer token for token-gated (private/unlisted) projects.
+  token: process.env.EXTENSION_DEV_TOKEN,
 });
 ```
 
@@ -84,8 +98,13 @@ extension-artifact-integrity \
   --repo my-extension \
   --sha abc123 \
   --browser chrome \
+  --expected-sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 \
+  --token "$EXTENSION_DEV_TOKEN" \
   --out /abs/path/to/artifact-integrity.json
 ```
+
+`--expected-sha256` and `--token` are optional and also read from the
+`EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables.
 
 ## Output
 
@@ -101,16 +120,21 @@ Top-level shape (public-safe):
 type ArtifactIntegrityReport = {
   ok: boolean;
   browser: string;
+  // SHA-256 (hex) of the downloaded package archive, when bytes were retrieved.
+  // Always reported so you can record or pin it even if no digest was declared.
+  sha256?: string;
   urls: {
     package: string;
     metadata: string;
+    manifest?: string;
   };
   checks: Array<{
     id:
       | "download-package"
       | "zip-structure"
       | "manifest-present"
-      | "download-metadata";
+      | "download-metadata"
+      | "package-integrity";
     ok: boolean;
     detail?: string;
     title?: string;
@@ -133,9 +157,11 @@ Maxed-out JSON example:
 {
   "ok": false,
   "browser": "chrome",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "urls": {
     "package": "https://artifacts.extension.land/my-org/my-extension/abc123/chrome.zip",
-    "metadata": "https://artifacts.extension.land/my-org/my-extension/abc123/chrome.json"
+    "metadata": "https://artifacts.extension.land/my-org/my-extension/abc123/chrome.json",
+    "manifest": "https://artifacts.extension.land/my-org/my-extension/abc123/artifact-manifest/chrome.json"
   },
   "checks": [
     {
@@ -178,6 +204,17 @@ Maxed-out JSON example:
       "remediation": "Publish <browser>.json with build metadata.",
       "expected": "HTTP 200 and valid JSON",
       "actual": "Downloaded"
+    },
+    {
+      "id": "package-integrity",
+      "ok": false,
+      "title": "Package integrity",
+      "level": "fail",
+      "summary": "Package bytes match the declared SHA-256.",
+      "remediation": "Republish the artifact, or fix the declared digest in metadata.",
+      "expected": "abc0...def",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "detail": "Package digest mismatch: expected abc0...def, got e3b0c442...b855."
     }
   ]
 }
