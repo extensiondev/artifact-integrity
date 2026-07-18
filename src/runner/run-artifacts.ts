@@ -6,9 +6,6 @@
 // ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝
 // MIT License (c) Cezar Augusto and the extension.dev collaborators
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
 import * as crypto from "node:crypto";
 import AdmZip from "adm-zip";
 import type { RunArtifactsInput, RunArtifactsResult } from "../types";
@@ -35,6 +32,50 @@ function errorMessage(e: unknown) {
   }
 
   return String(e);
+}
+
+const MANIFEST_MAX_BYTES = 1024 * 1024;
+
+type ManifestCheck = { id: "manifest-present"; ok: boolean; detail?: string };
+
+function inspectManifest(zip: AdmZip): ManifestCheck {
+  const entry = zip.getEntries().find((e) => e.entryName === "manifest.json");
+  if (!entry) {
+    return {
+      id: "manifest-present",
+      ok: false,
+      detail: "No manifest.json at the archive root",
+    };
+  }
+  if (entry.header.size > MANIFEST_MAX_BYTES) {
+    return {
+      id: "manifest-present",
+      ok: false,
+      detail: `manifest.json is implausibly large (${entry.header.size} bytes)`,
+    };
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(entry.getData().toString("utf8"));
+  } catch (e: unknown) {
+    return {
+      id: "manifest-present",
+      ok: false,
+      detail: `manifest.json is not valid JSON: ${errorMessage(e)}`,
+    };
+  }
+  const mv =
+    json && typeof json === "object"
+      ? (json as { manifest_version?: unknown }).manifest_version
+      : undefined;
+  if (mv !== 2 && mv !== 3) {
+    return {
+      id: "manifest-present",
+      ok: false,
+      detail: `manifest_version must be 2 or 3 (found ${JSON.stringify(mv)})`,
+    };
+  }
+  return { id: "manifest-present", ok: true };
 }
 
 export async function runArtifacts(
@@ -97,20 +138,7 @@ export async function runArtifacts(
 
   if (zip) {
     try {
-      const extractedDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), "artifact-integrity-"),
-      );
-      zip.extractAllTo(extractedDir, true);
-
-      const manifestPath = path.join(extractedDir, "manifest.json");
-      const ok = fs.existsSync(manifestPath);
-      checks.push(
-        enrichCheck({
-          id: "manifest-present",
-          ok,
-          detail: ok ? undefined : `Missing ${manifestPath}`,
-        }),
-      );
+      checks.push(enrichCheck(inspectManifest(zip)));
     } catch (e: unknown) {
       checks.push(
         enrichCheck({

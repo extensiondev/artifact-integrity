@@ -154,6 +154,68 @@ describe("extension-artifact-integrity", () => {
     expect(out.checks.find((c) => c.id === "download-metadata")?.ok).toBe(true);
   });
 
+  it("fails manifest-present when manifest.json is missing from the zip", async () => {
+    const zip = new AdmZip();
+    zip.addFile("popup.js", Buffer.from("console.log(1)", "utf8"));
+    const zipBytes = zip.toBuffer();
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = mockFetch(zipBytes, { ok: true });
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    const c = out.checks.find((x) => x.id === "manifest-present");
+    expect(c?.ok).toBe(false);
+    expect(out.checks.find((x) => x.id === "zip-structure")?.ok).toBe(true);
+  });
+
+  it("fails manifest-present when manifest.json is not valid JSON", async () => {
+    const zip = new AdmZip();
+    zip.addFile("manifest.json", Buffer.from("{ not json", "utf8"));
+    const zipBytes = zip.toBuffer();
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = mockFetch(zipBytes, { ok: true });
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    expect(out.checks.find((x) => x.id === "manifest-present")?.ok).toBe(false);
+  });
+
+  it("fails manifest-present when manifest_version is not 2 or 3", async () => {
+    const zip = new AdmZip();
+    zip.addFile("manifest.json", Buffer.from('{"manifest_version":1}', "utf8"));
+    const zipBytes = zip.toBuffer();
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = mockFetch(zipBytes, { ok: true });
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    expect(out.checks.find((x) => x.id === "manifest-present")?.ok).toBe(false);
+  });
+
   it("passes content-integrity when metadata declares a matching sha256", async () => {
     const zipBytes = sampleZip();
     const digest = crypto.createHash("sha256").update(zipBytes).digest("hex");

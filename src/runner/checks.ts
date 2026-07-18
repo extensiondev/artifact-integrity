@@ -37,11 +37,12 @@ export function enrichCheck(check: Check): Check {
         ...check,
         title: "Manifest present",
         level: "fail",
-        summary: "manifest.json exists at the archive root.",
+        summary:
+          "manifest.json exists at the archive root and declares manifest_version 2 or 3.",
         remediation:
-          "Place manifest.json at the root of the extension package.",
-        expected: "/manifest.json at zip root",
-        actual: check.ok ? "Found" : check.detail,
+          "Place a valid manifest.json (manifest_version 2 or 3) at the root of the extension package.",
+        expected: "Valid /manifest.json at zip root",
+        actual: check.ok ? "Valid" : check.detail,
       };
     case "download-metadata":
       return {
