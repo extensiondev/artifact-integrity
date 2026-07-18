@@ -11,6 +11,7 @@ import { defineConfig } from "@rslib/core";
 
 export default defineConfig({
   source: {
+    tsconfigPath: "./tsconfig.build.json",
     entry: {
       module: path.resolve(__dirname, "./module.ts"),
     },

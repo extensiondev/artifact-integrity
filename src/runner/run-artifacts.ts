@@ -95,10 +95,9 @@ export async function runArtifacts(
     );
   }
 
-  let extractedDir: string | null = null;
   if (zip) {
     try {
-      extractedDir = fs.mkdtempSync(
+      const extractedDir = fs.mkdtempSync(
         path.join(os.tmpdir(), "artifact-integrity-"),
       );
       zip.extractAllTo(extractedDir, true);

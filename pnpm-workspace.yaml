@@ -1,2 +1,12 @@
 packages:
   - "."
+
+# Force patched versions of transitive dev-tool dependencies flagged by the
+# security advisories. All are pulled in by vitest/eslint/typescript-eslint
+# and are compatible with the ranges those tools declare.
+overrides:
+  vite: ">=7.3.5"
+  rollup: ">=4.59.0"
+  flatted: ">=3.4.2"
+  picomatch: ">=4.0.4"
+  postcss: ">=8.5.10"

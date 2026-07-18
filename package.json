@@ -71,21 +71,20 @@
     "access": "restricted"
   },
   "dependencies": {
-    "adm-zip": "^0.5.12"
+    "adm-zip": "^0.6.0"
   },
   "peerDependencies": {},
   "peerDependenciesMeta": {},
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@rslib/core": "^0.9.2",
-    "@types/adm-zip": "^0.5.7",
-    "@types/node": "^22.15.30",
-    "eslint": "^9.32.0",
-    "globals": "^16.0.0",
-    "np": "^10.2.0",
-    "prettier": "^3.7.4",
+    "@eslint/js": "^10.0.1",
+    "@rslib/core": "^0.23.2",
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^26.1.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.39.0",
-    "vitest": "3.2.2"
+    "typescript-eslint": "^8.64.0",
+    "vitest": "^4.1.10"
   }
 }

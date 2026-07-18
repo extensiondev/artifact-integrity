@@ -13,6 +13,13 @@ rest of the extension.dev open source stack. No library or CLI behavior change.
   into an annotated tag, and cuts a matching GitHub release.
 - LICENSE and README attribution aligned to "Cezar Augusto and the
   extension.dev collaborators".
+- Security and dependency hardening: `adm-zip` moved to `^0.6.0` (fixes the
+  crafted-zip memory allocation advisory), the dev toolchain (eslint, vitest,
+  rslib, typescript-eslint) bumped to current majors, the unused `np` release
+  helper dropped, and patched transitive versions pinned. `pnpm audit` is now
+  clean.
+- Build split into a dedicated `tsconfig.build.json` so declaration output
+  stays free of test and config files under the newer toolchain.
 
 ## 0.4.0
 
