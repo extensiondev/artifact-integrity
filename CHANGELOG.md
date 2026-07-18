@@ -2,8 +2,29 @@
 
 ## 0.5.0
 
-Presentation and release-plumbing pass to bring the package in line with the
-rest of the extension.dev open source stack. No library or CLI behavior change.
+Security-hardening and presentation pass to bring the package in line with the
+rest of the extension.dev open source stack.
+
+Security and trust model:
+
+- The archive is now inspected entirely in memory. It is no longer extracted
+  to disk, which removes the zip-slip path traversal, malicious-symlink, and
+  zip-bomb disk-exhaustion surface that came with extraction (and the temp-dir
+  leak). The manifest check is now stricter too: it must parse as JSON and
+  declare `manifest_version` 2 or 3.
+- Content integrity can fail closed. A provided-but-malformed `expectedSha256`
+  is a hard error instead of a silent fallback to a registry-declared digest,
+  and the new `requireDigest` option fails the check when no digest can be
+  resolved from any source.
+- Downloads are size-capped (default 256 MiB) so a hostile origin cannot
+  exhaust the runner, and the bearer token is sent only over HTTPS.
+- The `browser` value is validated against the supported set and encoded
+  before it reaches a URL, and the gate result is defined by severity so a
+  `warn` check can never silently become a hard failure.
+- CI now blocks on high and critical dependency advisories, and the repository
+  ships a `SECURITY.md`.
+
+Presentation and plumbing:
 
 - Source files now carry the shared ANSI wordmark banner and MIT attribution
   header, matching the sibling packages.
