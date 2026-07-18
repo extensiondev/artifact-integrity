@@ -32,6 +32,19 @@ function sampleZip() {
 }
 
 describe("extension-artifact-integrity", () => {
+  it("rejects an unsupported browser instead of building a URL from it", async () => {
+    await expect(
+      runArtifacts({
+        artifactsBaseUrl: "https://artifacts.extension.land",
+        owner: "o",
+        repo: "r",
+        sha: "s",
+        browser: "../../../secret" as unknown as "chrome",
+        timeoutMs: 1000,
+      }),
+    ).rejects.toThrow(/Unsupported browser/);
+  });
+
   it("fails gracefully when remote is unreachable", async () => {
     const res = await runArtifacts({
       artifactsBaseUrl: "https://invalid.example.local",

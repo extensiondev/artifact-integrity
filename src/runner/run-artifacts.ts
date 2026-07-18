@@ -21,6 +21,8 @@ function normalizeBaseUrl(u: string) {
   return String(u || "").replace(/\/+$/, "");
 }
 
+const SUPPORTED_BROWSERS = new Set(["chrome", "firefox", "edge"]);
+
 function extForBrowser(browser: string) {
   return browser === "firefox" ? "xpi" : "zip";
 }
@@ -90,17 +92,26 @@ export async function runArtifacts(
     );
   }
 
+  if (!SUPPORTED_BROWSERS.has(input.browser)) {
+    throw new Error(
+      `Unsupported browser "${input.browser}". Expected one of: ${[
+        ...SUPPORTED_BROWSERS,
+      ].join(", ")}.`,
+    );
+  }
+
   const timeoutMs = input.timeoutMs ?? 15_000;
   const base = normalizeBaseUrl(input.artifactsBaseUrl);
   const ext = extForBrowser(input.browser);
+  const browserSeg = encodeURIComponent(input.browser);
 
   const buildBase = `${base}/${encodeURIComponent(input.owner)}/${encodeURIComponent(
     input.repo,
   )}/builds/${encodeURIComponent(input.sha)}`;
-  const packageUrl = `${buildBase}/${input.browser}.${ext}`;
-  const metadataUrl = `${buildBase}/${input.browser}.json`;
+  const packageUrl = `${buildBase}/${browserSeg}.${ext}`;
+  const metadataUrl = `${buildBase}/${browserSeg}.json`;
 
-  const manifestUrl = `${buildBase}/artifact-manifest/${input.browser}.json`;
+  const manifestUrl = `${buildBase}/artifact-manifest/${browserSeg}.json`;
 
   const checks: RunArtifactsResult["checks"] = [];
 
