@@ -119,7 +119,7 @@ export async function runArtifacts(
 
   let zipBuf: Buffer | null = null;
   try {
-    zipBuf = await fetchBytes(packageUrl, timeoutMs, token);
+    zipBuf = await fetchBytes(packageUrl, timeoutMs, token, input.maxBytes);
     checks.push(enrichCheck({ id: "download-package", ok: true }));
   } catch (e: unknown) {
     checks.push(

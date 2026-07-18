@@ -21,6 +21,8 @@ export type RunArtifactsInput = {
   expectedSha256?: string;
 
   requireDigest?: boolean;
+
+  maxBytes?: number;
 };
 
 export type RunArtifactsResult = {
