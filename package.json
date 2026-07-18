@@ -68,7 +68,9 @@
     "prepublishOnly": "pnpm run test && pnpm run compile"
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
     "adm-zip": "^0.6.0"

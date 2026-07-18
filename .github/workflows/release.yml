@@ -139,13 +139,10 @@ jobs:
 
       # No NODE_AUTH_TOKEN: npm authenticates via the GitHub OIDC token
       # (id-token: write above) against the trusted publisher configured on
-      # npmjs.com for this repo/workflow. This repo is private, so npm skips
-      # provenance (which needs a public repo); NPM_CONFIG_PROVENANCE=false
-      # keeps that deterministic. Make the repo public to get provenance.
-      - name: Publish to npm via trusted publishing
-        env:
-          NPM_CONFIG_PROVENANCE: "false"
-        run: npm publish --access ${{ steps.meta.outputs.publish_access }} --tag latest --ignore-scripts
+      # npmjs.com for this repo/workflow. Provenance is generated automatically
+      # now that the repository is public.
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access ${{ steps.meta.outputs.publish_access }} --tag latest --ignore-scripts
 
       - name: Create GitHub release
         env:
