@@ -17,14 +17,15 @@ function isHttps(url: string): boolean {
   }
 }
 
-function authHeaders(url: string, token: string | undefined): Record<string, string> {
+function authHeaders(
+  url: string,
+  token: string | undefined,
+): Record<string, string> {
   const trimmed = String(token || "").trim();
   if (!trimmed) return {};
 
   if (!isHttps(url)) {
-    throw new Error(
-      "Refusing to send a bearer token over a non-HTTPS URL.",
-    );
+    throw new Error("Refusing to send a bearer token over a non-HTTPS URL.");
   }
   return { Authorization: `Bearer ${trimmed}` };
 }

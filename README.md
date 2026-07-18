@@ -17,7 +17,7 @@ npm install @extension.dev/artifact-integrity
 
 Runs as a library call or a one-line CLI in any CI. Exit 0 ships, exit 1 does not.
 
-[extension.dev](https://extension.dev) · [Documentation](https://extension.js.org) · [Templates](https://templates.extension.dev) · [Examples](https://github.com/extension-js/examples) · [Discord](https://discord.gg/v9h2RgeTSN)
+[extension.dev](https://extension.dev) · [Templates](https://templates.extension.dev) · [Discord](https://discord.gg/v9h2RgeTSN)
 
 ## Why a release gate
 
@@ -198,18 +198,15 @@ Maxed-out JSON example:
 
 ## The extension.dev stack
 
-| Package                                                                        | Use it to                                                             |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp)       | Give AI agents tools to build, run, and debug extensions              |
-| [`@extension.dev/skill`](https://www.npmjs.com/package/@extension.dev/skill)   | Teach agents the cross-browser rules and silent-failure gotchas       |
-
-All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.
+| Package | Use it to |
+| --- | --- |
+| [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp) | Give AI agents tools to build, run, debug, and publish extensions |
+| [`@extension.dev/skill`](https://www.npmjs.com/package/@extension.dev/skill) | Teach AI agents the judgment half: cross-browser rules, gotchas, playbooks |
 
 ## Community
 
 - Join the [Discord](https://discord.gg/v9h2RgeTSN) for help and feedback
-- Browse production-ready [examples](https://github.com/extension-js/examples)
-- Report Extension.js framework issues on [GitHub](https://github.com/extension-js/extension.js/issues)
+- Report a bug or request a feature on [GitHub](https://github.com/extensiondev/artifact-integrity/issues)
 
 ## License
 

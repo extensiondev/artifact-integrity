@@ -9,7 +9,9 @@
 export type DeclaredDigest = { hex?: string; b64?: string };
 
 export function parseExpectedHex(value?: string): DeclaredDigest | null {
-  const v = String(value || "").trim().toLowerCase();
+  const v = String(value || "")
+    .trim()
+    .toLowerCase();
   return /^[a-f0-9]{64}$/.test(v) ? { hex: v } : null;
 }
 
@@ -22,7 +24,12 @@ export function parseDeclaredDigest(meta: unknown): DeclaredDigest | null {
       ? (obj as Record<string, unknown>).sha256
       : undefined;
   };
-  for (const c of [m.sha256, m.checksum, nested("artifact"), nested("package")]) {
+  for (const c of [
+    m.sha256,
+    m.checksum,
+    nested("artifact"),
+    nested("package"),
+  ]) {
     if (typeof c === "string" && /^[a-f0-9]{64}$/i.test(c.trim())) {
       return { hex: c.trim().toLowerCase() };
     }

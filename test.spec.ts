@@ -25,13 +25,21 @@ function bytesResponse(bytes: Buffer) {
 }
 
 function jsonResponse(body: unknown) {
-  return response(Buffer.from(JSON.stringify(body), "utf8"), "application/json");
+  return response(
+    Buffer.from(JSON.stringify(body), "utf8"),
+    "application/json",
+  );
 }
 
-function mockFetch(zipBytes: Buffer, metadata: unknown, manifest: unknown = {}) {
+function mockFetch(
+  zipBytes: Buffer,
+  metadata: unknown,
+  manifest: unknown = {},
+) {
   return async (url: string) => {
     const u = String(url);
-    if (u.endsWith(".zip") || u.endsWith(".xpi")) return bytesResponse(zipBytes);
+    if (u.endsWith(".zip") || u.endsWith(".xpi"))
+      return bytesResponse(zipBytes);
     return jsonResponse(u.includes("artifact-manifest") ? manifest : metadata);
   };
 }
@@ -173,7 +181,10 @@ describe("extension-artifact-integrity", () => {
     (globalThis as any).fetch = async (url: string) => {
       const u = String(url);
       if (u.endsWith(".zip")) return bytesResponse(zipBytes);
-      return response(Buffer.from("<html>Not Found</html>", "utf8"), "text/html");
+      return response(
+        Buffer.from("<html>Not Found</html>", "utf8"),
+        "text/html",
+      );
     };
 
     const out = await runArtifacts({
@@ -303,7 +314,9 @@ describe("extension-artifact-integrity", () => {
     const zipBytes = sampleZip();
     const b64 = crypto.createHash("sha256").update(zipBytes).digest("base64");
     const originalFetch = globalThis.fetch;
-    (globalThis as any).fetch = mockFetch(zipBytes, { integrity: `sha256-${b64}` });
+    (globalThis as any).fetch = mockFetch(zipBytes, {
+      integrity: `sha256-${b64}`,
+    });
 
     const out = await runArtifacts({
       artifactsBaseUrl: "https://artifacts.extension.land",
@@ -332,7 +345,9 @@ describe("extension-artifact-integrity", () => {
     });
     (globalThis as any).fetch = originalFetch;
 
-    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(false);
+    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(
+      false,
+    );
     expect(out.ok).toBe(false);
   });
 
@@ -384,7 +399,10 @@ describe("extension-artifact-integrity", () => {
 
   it("manifest digest takes priority over a metadata digest", async () => {
     const zipBytes = sampleZip();
-    const realDigest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const realDigest = crypto
+      .createHash("sha256")
+      .update(zipBytes)
+      .digest("hex");
     const originalFetch = globalThis.fetch;
 
     (globalThis as any).fetch = mockFetch(
@@ -403,7 +421,9 @@ describe("extension-artifact-integrity", () => {
     });
     (globalThis as any).fetch = originalFetch;
 
-    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(false);
+    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(
+      false,
+    );
   });
 
   it("fails content-integrity when requireDigest is set and none is declared", async () => {
@@ -430,7 +450,10 @@ describe("extension-artifact-integrity", () => {
 
   it("throws on a malformed expectedSha256 instead of falling back", async () => {
     const zipBytes = sampleZip();
-    const realDigest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const realDigest = crypto
+      .createHash("sha256")
+      .update(zipBytes)
+      .digest("hex");
     const originalFetch = globalThis.fetch;
 
     (globalThis as any).fetch = mockFetch(zipBytes, { sha256: realDigest });
@@ -451,7 +474,10 @@ describe("extension-artifact-integrity", () => {
 
   it("enforces expectedSha256 over a (correct) metadata digest", async () => {
     const zipBytes = sampleZip();
-    const realDigest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const realDigest = crypto
+      .createHash("sha256")
+      .update(zipBytes)
+      .digest("hex");
     const originalFetch = globalThis.fetch;
 
     (globalThis as any).fetch = mockFetch(zipBytes, { sha256: realDigest });
@@ -467,7 +493,9 @@ describe("extension-artifact-integrity", () => {
     });
     (globalThis as any).fetch = originalFetch;
 
-    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(false);
+    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(
+      false,
+    );
     expect(out.ok).toBe(false);
   });
 });

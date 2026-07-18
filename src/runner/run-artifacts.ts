@@ -192,11 +192,11 @@ export async function runArtifacts(
     );
   }
 
-  let manifestJson: unknown = null;
-  try {
-    manifestJson = await fetchJson(manifestUrl, timeoutMs, token);
-  } catch {
-  }
+  const manifestJson: unknown = await fetchJson(
+    manifestUrl,
+    timeoutMs,
+    token,
+  ).catch(() => null);
 
   let sha256: string | undefined;
   if (zipBuf) {
