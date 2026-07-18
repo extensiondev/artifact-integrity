@@ -40,3 +40,8 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      # A verification tool has no business shipping with known-vulnerable
+      # dependencies. Block on high and critical advisories.
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
