@@ -345,6 +345,49 @@ describe("extension-artifact-integrity", () => {
     expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(false);
   });
 
+  it("fails content-integrity when requireDigest is set and none is declared", async () => {
+    const zipBytes = sampleZip();
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = mockFetch(zipBytes, { ok: true });
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+      requireDigest: true,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    const c = out.checks.find((x) => x.id === "package-integrity");
+    expect(c?.ok).toBe(false);
+    expect(c?.level).toBe("fail");
+    expect(out.ok).toBe(false);
+  });
+
+  it("throws on a malformed expectedSha256 instead of falling back", async () => {
+    const zipBytes = sampleZip();
+    const realDigest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const originalFetch = globalThis.fetch;
+
+    (globalThis as any).fetch = mockFetch(zipBytes, { sha256: realDigest });
+
+    await expect(
+      runArtifacts({
+        artifactsBaseUrl: "https://artifacts.extension.land",
+        owner: "o",
+        repo: "r",
+        sha: "s",
+        browser: "chrome",
+        timeoutMs: 1000,
+        expectedSha256: "a".repeat(63),
+      }),
+    ).rejects.toThrow(/expectedSha256/);
+    (globalThis as any).fetch = originalFetch;
+  });
+
   it("enforces expectedSha256 over a (correct) metadata digest", async () => {
     const zipBytes = sampleZip();
     const realDigest = crypto.createHash("sha256").update(zipBytes).digest("hex");

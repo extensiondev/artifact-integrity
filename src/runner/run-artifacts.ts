@@ -81,6 +81,15 @@ function inspectManifest(zip: AdmZip): ManifestCheck {
 export async function runArtifacts(
   input: RunArtifactsInput,
 ): Promise<RunArtifactsResult> {
+  if (
+    String(input.expectedSha256 ?? "").trim() !== "" &&
+    parseExpectedHex(input.expectedSha256) === null
+  ) {
+    throw new Error(
+      "expectedSha256 must be a 64-character hex SHA-256; refusing to fall back to a registry-declared digest.",
+    );
+  }
+
   const timeoutMs = input.timeoutMs ?? 15_000;
   const base = normalizeBaseUrl(input.artifactsBaseUrl);
   const ext = extForBrowser(input.browser);
@@ -207,6 +216,15 @@ export async function runArtifacts(
               }.`,
         }),
       );
+    } else if (input.requireDigest) {
+      checks.push(
+        enrichCheck({
+          id: "package-integrity",
+          ok: false,
+          actual: sha256,
+          detail: `No declared digest to verify against and requireDigest is set; computed sha256=${sha256}.`,
+        }),
+      );
     } else {
       checks.push(
         enrichCheck({
@@ -228,7 +246,7 @@ export async function runArtifacts(
     );
   }
 
-  const ok = checks.every((c) => c.ok);
+  const ok = checks.every((c) => c.ok || c.level !== "fail");
   return {
     ok,
     browser: input.browser,

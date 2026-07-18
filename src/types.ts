@@ -19,6 +19,8 @@ export type RunArtifactsInput = {
   token?: string;
 
   expectedSha256?: string;
+
+  requireDigest?: boolean;
 };
 
 export type RunArtifactsResult = {

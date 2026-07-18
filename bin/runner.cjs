@@ -31,6 +31,7 @@ function parseArgs(argv) {
     else if (a === "--timeout-ms") out.timeoutMs = Number(argv[++i]);
     else if (a === "--token") out.token = argv[++i];
     else if (a === "--expected-sha256") out.expectedSha256 = argv[++i];
+    else if (a === "--require-digest") out.requireDigest = true;
   }
   return out;
 }
@@ -60,6 +61,10 @@ async function main() {
     process.env.EXTENSIONDEV_EXPECTED_SHA256 ||
     undefined;
 
+  const requireDigest =
+    Boolean(args.requireDigest) ||
+    process.env.EXTENSIONDEV_REQUIRE_DIGEST === "1";
+
   const result = await runArtifacts({
     artifactsBaseUrl: baseUrl,
     owner: args.owner,
@@ -69,6 +74,7 @@ async function main() {
     timeoutMs: args.timeoutMs,
     token,
     expectedSha256,
+    requireDigest,
   });
 
   fs.writeFileSync(outFile, JSON.stringify(result, null, 2) + "\n", "utf8");
