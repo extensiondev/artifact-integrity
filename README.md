@@ -188,7 +188,6 @@ Maxed-out JSON example:
 | --- | --- |
 | [`@extension.dev/mcp`](https://github.com/extensiondev/mcp) | Give AI agents tools to build, run, and debug extensions |
 | [`@extension.dev/skill`](https://github.com/extensiondev/skill) | Teach agents the cross-browser rules and silent-failure gotchas |
-| [`@extension.dev/compiler`](https://github.com/extensiondev/compiler) | Build extensions in the browser with esbuild-wasm |
 
 All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.
 
