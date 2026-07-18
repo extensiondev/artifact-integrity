@@ -25,6 +25,26 @@ export type RunArtifactsInput = {
   maxBytes?: number;
 };
 
+export type CheckId =
+  | "download-package"
+  | "zip-structure"
+  | "manifest-present"
+  | "download-metadata"
+  | "package-integrity";
+
+export type Check = {
+  id: CheckId;
+  ok: boolean;
+  detail?: string;
+  title?: string;
+
+  level?: "info" | "warn" | "fail";
+  summary?: string;
+  remediation?: string;
+  expected?: string;
+  actual?: string;
+};
+
 export type RunArtifactsResult = {
   ok: boolean;
   browser: string;
@@ -35,66 +55,5 @@ export type RunArtifactsResult = {
     metadata: string;
     manifest?: string;
   };
-  checks: Array<
-    | {
-        id: "download-package";
-        ok: boolean;
-        detail?: string;
-        title?: string;
-        level?: "info" | "warn" | "fail";
-        summary?: string;
-        remediation?: string;
-        expected?: string;
-        actual?: string;
-        docsUrl?: string;
-      }
-    | {
-        id: "zip-structure";
-        ok: boolean;
-        detail?: string;
-        title?: string;
-        level?: "info" | "warn" | "fail";
-        summary?: string;
-        remediation?: string;
-        expected?: string;
-        actual?: string;
-        docsUrl?: string;
-      }
-    | {
-        id: "manifest-present";
-        ok: boolean;
-        detail?: string;
-        title?: string;
-        level?: "info" | "warn" | "fail";
-        summary?: string;
-        remediation?: string;
-        expected?: string;
-        actual?: string;
-        docsUrl?: string;
-      }
-    | {
-        id: "download-metadata";
-        ok: boolean;
-        detail?: string;
-        title?: string;
-        level?: "info" | "warn" | "fail";
-        summary?: string;
-        remediation?: string;
-        expected?: string;
-        actual?: string;
-        docsUrl?: string;
-      }
-    | {
-        id: "package-integrity";
-        ok: boolean;
-        detail?: string;
-        title?: string;
-        level?: "info" | "warn" | "fail";
-        summary?: string;
-        remediation?: string;
-        expected?: string;
-        actual?: string;
-        docsUrl?: string;
-      }
-  >;
+  checks: Check[];
 };

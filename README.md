@@ -23,12 +23,15 @@ Runs as a library call or a one-line CLI in any CI. Exit 0 ships, exit 1 does no
 
 An extension artifact is the exact bytes your users install. Between the build that produced it and the store that publishes it sit a registry, a CDN, and a release pipeline, any of which can serve the wrong bytes. This package downloads the artifact your release is about to promote and verifies it end to end:
 
-- **Download** the packaged artifact and its co-published metadata over a token-aware fetch with a hard timeout, so private and unlisted projects gate the same way public ones do
-- **Structure** the archive as a valid zip with `manifest.json` at its root, the minimum shape every browser store rejects without
-- **Integrity**: hash the downloaded bytes with SHA-256 and compare them against a declared digest, so a registry or CDN that serves tampered but valid looking bytes fails the gate
+- **Download** the packaged artifact and its co-published metadata over a token-aware fetch with a hard timeout and a size cap, so private and unlisted projects gate the same way public ones do and a hostile origin cannot exhaust the runner
+- **Structure** the archive as a valid zip, inspected in memory (never extracted to disk), with a root `manifest.json` that parses and declares `manifest_version` 2 or 3
+- **Integrity**: hash the downloaded bytes with SHA-256 and compare them against a declared digest
 - **Report** every check as a deterministic JSON file your CI can gate on, archive, or diff release over release
 
-Content integrity is the check that turns this from a well-formedness lint into a trust boundary. The digest is resolved, in order, from an explicit `expectedSha256` you pin in CI, then the artifact manifest's `files.zip.sha256`, then a `sha256` or SRI `integrity` field in the co-published metadata. When none is declared the check is informational and reports the computed hash so you can record or pin it.
+Content integrity is the check that turns this from a well-formedness lint into a trust boundary, but be precise about which threat each digest source defends against. The digest is resolved, in order, from an explicit `expectedSha256` you pin in CI, then the artifact manifest's `files.zip.sha256`, then a `sha256` or SRI `integrity` field in the co-published metadata.
+
+- The **manifest and metadata digests come from the same origin that serves the bytes.** They catch accidental corruption and partial tampering, but a _fully compromised_ registry can serve tampered bytes together with a matching digest, and the check would pass.
+- Only a **pinned `expectedSha256`** (established out of band, never fetched) defends against a compromised registry. Set it in CI whenever the guarantee matters, and set `requireDigest` to fail closed when no digest can be resolved at all, so an unverifiable artifact never slips through green.
 
 Verification tooling is only worth trusting when you can read it; this package is open source for exactly that reason.
 
@@ -46,9 +49,15 @@ const result = await runArtifacts({
   sha: "abc123",
   browser: "chrome",
   // Optional. Pin the expected package digest to make content integrity a hard
-  // gate; without it the check falls back to the manifest/metadata digest.
-  expectedSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  // Optional bearer token for token-gated (private/unlisted) projects.
+  // gate. When set it is the source of truth; a malformed value is a hard error,
+  // never a silent fallback to a registry-declared digest.
+  expectedSha256:
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  // Optional. Fail closed when no digest can be resolved from any source,
+  // instead of passing the integrity check informationally.
+  requireDigest: true,
+  // Optional bearer token for token-gated (private/unlisted) projects. Sent
+  // only over HTTPS; a non-HTTPS base URL with a token is refused.
   token: process.env.EXTENSION_DEV_TOKEN,
 });
 ```
@@ -63,17 +72,20 @@ extension-artifact-integrity \
   --sha abc123 \
   --browser chrome \
   --expected-sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 \
+  --require-digest \
   --token "$EXTENSION_DEV_TOKEN" \
   --out /abs/path/to/artifact-integrity.json
 ```
 
-`--expected-sha256` and `--token` are optional and also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables.
+`--expected-sha256`, `--require-digest`, and `--token` are optional. `--expected-sha256` and `--token` also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables, and `--require-digest` from `EXTENSIONDEV_REQUIRE_DIGEST=1`.
 
 ## Output
 
 - **stdout**: `Wrote <OUTPUT_PATH>`
 - **side effect**: writes a JSON result file (default: `./artifact-integrity.json`)
-- **exit code**: `0` when all checks pass, `1` on failure or error
+- **exit code**: `0` when the gate passes, `1` on failure or error
+
+The gate is defined by severity, not by a raw boolean: a run is `ok: false` only when a `fail`-level check fails. `info` and `warn` checks are reported but never block, so a warning can never silently become a hard failure.
 
 ### Schema
 
@@ -101,17 +113,19 @@ type ArtifactIntegrityReport = {
     ok: boolean;
     detail?: string;
     title?: string;
+    // Severity class the check carries WHEN IT FAILS, not its current status:
+    // a passing check can still read `level: "fail"`. Only a failing
+    // `fail`-level check blocks the gate.
     level?: "info" | "warn" | "fail";
     summary?: string;
     remediation?: string;
     expected?: string;
     actual?: string;
-    docsUrl?: string;
   }>;
 };
 ```
 
-Checks may include optional metadata fields (`title`, `level`, `summary`, `remediation`, `expected`, `actual`, `docsUrl`) to make reports more actionable.
+Checks may include optional metadata fields (`title`, `level`, `summary`, `remediation`, `expected`, `actual`) to make reports more actionable.
 
 Maxed-out JSON example:
 
@@ -184,10 +198,10 @@ Maxed-out JSON example:
 
 ## The extension.dev stack
 
-| Package | Use it to |
-| --- | --- |
-| [`@extension.dev/mcp`](https://github.com/extensiondev/mcp) | Give AI agents tools to build, run, and debug extensions |
-| [`@extension.dev/skill`](https://github.com/extensiondev/skill) | Teach agents the cross-browser rules and silent-failure gotchas |
+| Package                                                           | Use it to                                                       |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`@extension.dev/mcp`](https://github.com/extensiondev/mcp)       | Give AI agents tools to build, run, and debug extensions        |
+| [`@extension.dev/skill`](https://github.com/extensiondev/skill)   | Teach agents the cross-browser rules and silent-failure gotchas |
 
 All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.
 
