@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+
+Registry catch-up release: publishes the 0.5.0 security-hardening work to npm,
+which was tagged but never reached the registry. No code changes since 0.5.0.
+
 ## 0.5.0
 
 Security-hardening and presentation pass to bring the package in line with the
