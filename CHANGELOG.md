@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0
+
+The package moves to Apache-2.0.
+
+### Changed
+
+- **License: MIT is now Apache-2.0.** Everything published up to and
+  including 0.5.1 was released under MIT and stays MIT forever; you keep
+  those rights on those versions. From 1.0.0 forward the license is
+  Apache-2.0, which adds an express patent grant. Installing this package
+  and using it to verify artifacts is unaffected.
+
 ## 0.5.1
 
 Registry catch-up release: publishes the 0.5.0 security-hardening work to npm,
