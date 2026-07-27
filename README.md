@@ -2,10 +2,12 @@
 [npm-version-url]: https://www.npmjs.com/package/@extension.dev/artifact-integrity
 [npm-downloads-image]: https://img.shields.io/npm/dm/%40extension.dev%2Fartifact-integrity.svg?color=26FFB8
 [npm-downloads-url]: https://www.npmjs.com/package/@extension.dev/artifact-integrity
+[action-image]: https://github.com/extensiondev/artifact-integrity/actions/workflows/ci.yml/badge.svg?branch=main&color=26FFB8
+[action-url]: https://github.com/extensiondev/artifact-integrity/actions
 [discord-image]: https://img.shields.io/discord/1253608412890271755?label=Discord&logo=discord&style=flat&color=26FFB8
 [discord-url]: https://discord.gg/v9h2RgeTSN
 
-# @extension.dev/artifact-integrity [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![Discord][discord-image]][discord-url]
+# @extension.dev/artifact-integrity [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![CI][action-image]][action-url] [![Discord][discord-image]][discord-url]
 
 > The release gate for browser extensions. Download an artifact, verify it, and fail CI on tampered bytes before they ship.
 
@@ -203,10 +205,13 @@ Maxed-out JSON example:
 | [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp) | Give AI agents tools to build, run, debug, and publish extensions |
 | [`@extension.dev/skill`](https://www.npmjs.com/package/@extension.dev/skill) | Teach AI agents the judgment half: cross-browser rules, gotchas, playbooks |
 
+All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.
+
 ## Community
 
 - Join the [Discord](https://discord.gg/v9h2RgeTSN) for help and feedback
-- Report a bug or request a feature on [GitHub](https://github.com/extensiondev/artifact-integrity/issues)
+- Browse production-ready [examples](https://github.com/extension-js/examples)
+- Report Extension.js framework issues on [GitHub](https://github.com/extension-js/extension.js/issues)
 
 ## License
 
