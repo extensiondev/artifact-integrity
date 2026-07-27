@@ -79,12 +79,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
-
       - name: Read package metadata
         id: meta
         shell: bash
@@ -107,6 +101,15 @@ jobs:
           VERSION: ${{ steps.validate.outputs.version }}
         run: |
           node -e "const fs=require('fs');const p='package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version=process.env.VERSION;fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n')"
+
+      # The version bump must precede the build: the bundle inlines
+      # package.json, and publish runs with --ignore-scripts, so a
+      # post-build bump ships code reporting the previous version.
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test
 
       - name: Lint
         run: pnpm lint
