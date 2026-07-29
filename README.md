@@ -148,7 +148,7 @@ Maxed-out JSON example:
       "title": "Download package",
       "level": "fail",
       "summary": "Package archive is reachable and downloadable.",
-      "remediation": "Ensure the build artifact exists and the URL is correct.",
+      "remediation": "On HTTP 401 the registry refused the path, and the artifact may exist: the project is not declared public, or the first path segment is a name the platform reserves. Pass a token for a private project. On any other failure, check that the build artifact exists and the URL is correct.",
       "expected": "HTTP 200 and valid bytes",
       "actual": "Downloaded"
     },

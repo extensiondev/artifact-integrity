@@ -133,6 +133,35 @@ describe("extension-artifact-integrity", () => {
     }
   });
 
+  it("points a 401 at the refusal instead of at a missing artifact", async () => {
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = async () =>
+      ({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        headers: { get: () => null },
+        body: null,
+        arrayBuffer: async () => Buffer.alloc(0),
+      }) as unknown as Response;
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    const c = out.checks.find((x) => x.id === "download-package");
+    expect(c?.ok).toBe(false);
+    expect(c?.detail).toMatch(/401/);
+    expect(c?.remediation).toMatch(/declared public/i);
+    expect(c?.remediation).toMatch(/reserves/i);
+  });
+
   it("refuses to send a bearer token over a non-HTTPS URL", async () => {
     const zipBytes = sampleZip();
     const originalFetch = globalThis.fetch;

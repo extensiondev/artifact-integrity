@@ -12,6 +12,18 @@ The package moves to Apache-2.0.
   Apache-2.0, which adds an express patent grant. Installing this package
   and using it to verify artifacts is unaffected.
 
+### Fixed
+
+- **A 401 no longer reads as a missing artifact.** The `download-package`
+  remediation said "Ensure the build artifact exists and the URL is correct",
+  which sends the reader to look for a file that is usually there. The
+  registry answers `401` for a project it holds no public declaration for and
+  for a path whose first segment is a name the platform reserves, in both
+  cases before it decides anything about the bytes. The remediation now names
+  the refusal first and keeps the missing-artifact advice for every other
+  failure. `detail` already carried `HTTP 401 Unauthorized`, so nothing new is
+  reported; only the sentence changed.
+
 ## 0.5.1
 
 Registry catch-up release: publishes the 0.5.0 security-hardening work to npm,
