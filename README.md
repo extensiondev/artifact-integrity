@@ -9,7 +9,7 @@
 
 # @extension.dev/artifact-integrity [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![CI][action-image]][action-url] [![Discord][discord-image]][discord-url]
 
-> The release gate for browser extensions. Download an artifact, verify it, and fail CI on tampered bytes before they ship.
+> The release gate for browser extensions. Download an artifact, check it against a declared SHA-256, and fail CI when the bytes do not match.
 
 <img alt="Logo" align="right" src="https://media.extension.land/brand/extension-dev/logo-dock.png" width="15.5%" />
 
