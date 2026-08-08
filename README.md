@@ -79,7 +79,7 @@ extension-artifact-integrity \
   --out /abs/path/to/artifact-integrity.json
 ```
 
-`--expected-sha256`, `--require-digest`, and `--token` are optional. `--expected-sha256` and `--token` also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables, and `--require-digest` from `EXTENSIONDEV_REQUIRE_DIGEST=1`.
+`--expected-sha256`, `--require-digest`, and `--token` are optional. `--expected-sha256` and `--token` also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables, and `--require-digest` from `EXTENSIONDEV_REQUIRE_DIGEST=1`. `--base-url` is optional as well: it reads from the `EXTENSIONDEV_ARTIFACTS_BASE_URL` environment variable and defaults to `https://registry.extension.land`.
 
 ## Output
 
@@ -111,6 +111,7 @@ type ArtifactIntegrityReport = {
       | "zip-structure"
       | "manifest-present"
       | "download-metadata"
+      | "download-manifest"
       | "package-integrity";
     ok: boolean;
     detail?: string;
@@ -129,6 +130,8 @@ type ArtifactIntegrityReport = {
 
 Checks may include optional metadata fields (`title`, `level`, `summary`, `remediation`, `expected`, `actual`) to make reports more actionable.
 
+`download-manifest` records the fetch of the artifact manifest at `urls.manifest`, the highest-priority registry-declared digest source. It carries `level: "warn"`: when the fetch fails, digest resolution falls back to the weaker metadata digest (or, with `requireDigest`, `package-integrity` still fails closed), and the report shows the fetch error instead of silently listing a URL that was never read.
+
 Maxed-out JSON example:
 
 ```json
@@ -137,9 +140,9 @@ Maxed-out JSON example:
   "browser": "chrome",
   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "urls": {
-    "package": "https://artifacts.extension.land/my-org/my-extension/abc123/chrome.zip",
-    "metadata": "https://artifacts.extension.land/my-org/my-extension/abc123/chrome.json",
-    "manifest": "https://artifacts.extension.land/my-org/my-extension/abc123/artifact-manifest/chrome.json"
+    "package": "https://registry.extension.land/my-org/my-extension/builds/abc123/chrome.zip",
+    "metadata": "https://registry.extension.land/my-org/my-extension/builds/abc123/chrome.json",
+    "manifest": "https://registry.extension.land/my-org/my-extension/builds/abc123/artifact-manifest/chrome.json"
   },
   "checks": [
     {
@@ -184,6 +187,17 @@ Maxed-out JSON example:
       "actual": "Downloaded"
     },
     {
+      "id": "download-manifest",
+      "ok": false,
+      "title": "Download artifact manifest",
+      "level": "warn",
+      "summary": "Artifact manifest JSON is reachable and valid JSON.",
+      "remediation": "Publish artifact-manifest/<browser>.json alongside the build, or pin expectedSha256 so the digest never depends on this fetch.",
+      "expected": "HTTP 200 and valid JSON",
+      "actual": "Artifact manifest could not be fetched; digest resolution falls back to a weaker source: HTTP 404 Not Found",
+      "detail": "Artifact manifest could not be fetched; digest resolution falls back to a weaker source: HTTP 404 Not Found"
+    },
+    {
       "id": "package-integrity",
       "ok": false,
       "title": "Package integrity",
@@ -200,9 +214,9 @@ Maxed-out JSON example:
 
 ## The extension.dev stack
 
-| Package | Use it to |
-| --- | --- |
-| [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp) | Give AI agents tools to build, run, debug, and publish extensions |
+| Package                                                                      | Use it to                                                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [`@extension.dev/mcp`](https://www.npmjs.com/package/@extension.dev/mcp)     | Give AI agents tools to build, run, debug, and publish extensions          |
 | [`@extension.dev/skill`](https://www.npmjs.com/package/@extension.dev/skill) | Teach AI agents the judgment half: cross-browser rules, gotchas, playbooks |
 
 All of it rides on [Extension.js](https://github.com/extension-js/extension.js), the open-source cross-browser extension framework.

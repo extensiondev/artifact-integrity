@@ -55,6 +55,17 @@ export function enrichCheck(check: Check): Check {
         expected: "HTTP 200 and valid JSON",
         actual: check.ok ? "Downloaded" : check.detail,
       };
+    case "download-manifest":
+      return {
+        ...check,
+        title: "Download artifact manifest",
+        level: "warn",
+        summary: "Artifact manifest JSON is reachable and valid JSON.",
+        remediation:
+          "Publish artifact-manifest/<browser>.json alongside the build, or pin expectedSha256 so the digest never depends on this fetch.",
+        expected: "HTTP 200 and valid JSON",
+        actual: check.ok ? "Downloaded" : check.detail,
+      };
     case "package-integrity":
       return {
         title: "Package integrity",

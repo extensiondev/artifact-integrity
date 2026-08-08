@@ -24,6 +24,31 @@ The package moves to Apache-2.0.
   failure. `detail` already carried `HTTP 401 Unauthorized`, so nothing new is
   reported; only the sentence changed.
 
+## 0.5.2
+
+Report honesty release: the artifact manifest fetch can no longer fail
+silently, and the documented URLs now match the ones the code builds.
+
+### Added
+
+- **A failed artifact manifest fetch is now a reported check.** The fetch
+  used to swallow every rejection, so the report listed `urls.manifest` as
+  if it had been consulted while the highest-priority registry-declared
+  digest source vanished without a trace. Every run now emits a
+  `download-manifest` check: `warn` level, so `requireDigest` semantics and
+  the gate verdict are unchanged, with the fetch error in `detail` and a
+  note that digest resolution fell back to a weaker source.
+- Documented `EXTENSIONDEV_ARTIFACTS_BASE_URL`, which the CLI has honored
+  as the `--base-url` fallback all along.
+
+### Fixed
+
+- **README example URLs now match the code.** The report example pointed at
+  `artifacts.extension.land`, a host this package does not control, and
+  omitted the `/builds/` path segment the runner emits. Every documented URL
+  now uses the real default base `https://registry.extension.land` and the
+  `{owner}/{repo}/builds/{sha}/{browser}.zip` shape.
+
 ## 0.5.1
 
 Registry catch-up release: publishes the 0.5.0 security-hardening work to npm,

@@ -455,6 +455,93 @@ describe("extension-artifact-integrity", () => {
     );
   });
 
+  it("records a warn check with the error when the manifest fetch fails", async () => {
+    const zipBytes = sampleZip();
+    const digest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = async (url: string) => {
+      const u = String(url);
+      if (u.includes("artifact-manifest"))
+        throw new Error("manifest origin down");
+      if (u.endsWith(".zip")) return bytesResponse(zipBytes);
+      return jsonResponse({ sha256: digest });
+    };
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    const c = out.checks.find((x) => x.id === "download-manifest");
+    expect(c?.ok).toBe(false);
+    expect(c?.level).toBe("warn");
+    expect(c?.detail).toMatch(/manifest origin down/);
+    expect(c?.detail).toMatch(/weaker/i);
+    expect(out.checks.find((x) => x.id === "package-integrity")?.ok).toBe(true);
+    expect(out.ok).toBe(true);
+  });
+
+  it("reports the manifest fetch as a passing check when it succeeds", async () => {
+    const zipBytes = sampleZip();
+    const digest = crypto.createHash("sha256").update(zipBytes).digest("hex");
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = mockFetch(
+      zipBytes,
+      { ok: true },
+      { files: { zip: { sha256: digest } } },
+    );
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    const c = out.checks.find((x) => x.id === "download-manifest");
+    expect(c?.ok).toBe(true);
+    expect(c?.level).toBe("warn");
+  });
+
+  it("keeps requireDigest failing closed when the manifest fetch fails", async () => {
+    const zipBytes = sampleZip();
+    const originalFetch = globalThis.fetch;
+    (globalThis as any).fetch = async (url: string) => {
+      const u = String(url);
+      if (u.includes("artifact-manifest"))
+        throw new Error("manifest origin down");
+      if (u.endsWith(".zip")) return bytesResponse(zipBytes);
+      return jsonResponse({ ok: true });
+    };
+
+    const out = await runArtifacts({
+      artifactsBaseUrl: "https://artifacts.extension.land",
+      owner: "o",
+      repo: "r",
+      sha: "s",
+      browser: "chrome",
+      timeoutMs: 1000,
+      requireDigest: true,
+    });
+    (globalThis as any).fetch = originalFetch;
+
+    expect(out.checks.find((x) => x.id === "download-manifest")?.ok).toBe(
+      false,
+    );
+    const c = out.checks.find((x) => x.id === "package-integrity");
+    expect(c?.ok).toBe(false);
+    expect(c?.level).toBe("fail");
+    expect(out.ok).toBe(false);
+  });
+
   it("fails content-integrity when requireDigest is set and none is declared", async () => {
     const zipBytes = sampleZip();
     const originalFetch = globalThis.fetch;

@@ -30,6 +30,7 @@ export type CheckId =
   | "zip-structure"
   | "manifest-present"
   | "download-metadata"
+  | "download-manifest"
   | "package-integrity";
 
 export type Check = {

@@ -192,11 +192,19 @@ export async function runArtifacts(
     );
   }
 
-  const manifestJson: unknown = await fetchJson(
-    manifestUrl,
-    timeoutMs,
-    token,
-  ).catch(() => null);
+  let manifestJson: unknown = null;
+  try {
+    manifestJson = await fetchJson(manifestUrl, timeoutMs, token);
+    checks.push(enrichCheck({ id: "download-manifest", ok: true }));
+  } catch (e: unknown) {
+    checks.push(
+      enrichCheck({
+        id: "download-manifest",
+        ok: false,
+        detail: `Artifact manifest could not be fetched; digest resolution falls back to a weaker source: ${errorMessage(e)}`,
+      }),
+    );
+  }
 
   let sha256: string | undefined;
   if (zipBuf) {
