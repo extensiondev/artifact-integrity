@@ -8,7 +8,9 @@
 
 import * as crypto from "node:crypto";
 import AdmZip from "adm-zip";
-import type { RunArtifactsInput, RunArtifactsResult } from "../types";
+import type { Check, RunArtifactsInput, RunArtifactsResult } from "../types";
+import { SUPPORTED_BROWSERS } from "../types";
+import type { DeclaredDigest } from "./digest";
 import {
   parseExpectedHex,
   parseDeclaredDigest,
@@ -18,10 +20,8 @@ import { fetchBytes, fetchJson } from "./http";
 import { enrichCheck } from "./checks";
 
 function normalizeBaseUrl(u: string) {
-  return String(u || "").replace(/\/+$/, "");
+  return u.replace(/\/+$/, "");
 }
-
-const SUPPORTED_BROWSERS = new Set(["chrome", "firefox", "edge"]);
 
 function extForBrowser(browser: string) {
   return browser === "firefox" ? "xpi" : "zip";
@@ -38,9 +38,7 @@ function errorMessage(e: unknown) {
 
 const MANIFEST_MAX_BYTES = 1024 * 1024;
 
-type ManifestCheck = { id: "manifest-present"; ok: boolean; detail?: string };
-
-function inspectManifest(zip: AdmZip): ManifestCheck {
+function inspectManifest(zip: AdmZip): Check {
   const entry = zip.getEntries().find((e) => e.entryName === "manifest.json");
   if (!entry) {
     return {
@@ -92,14 +90,15 @@ export async function runArtifacts(
     );
   }
 
-  if (!SUPPORTED_BROWSERS.has(input.browser)) {
+  if (!SUPPORTED_BROWSERS.includes(input.browser)) {
     throw new Error(
-      `Unsupported browser "${input.browser}". Expected one of: ${[
-        ...SUPPORTED_BROWSERS,
-      ].join(", ")}.`,
+      `Unsupported browser "${input.browser}". Expected one of: ${SUPPORTED_BROWSERS.join(
+        ", ",
+      )}.`,
     );
   }
 
+  const pinned = parseExpectedHex(input.expectedSha256) !== null;
   const timeoutMs = input.timeoutMs ?? 15_000;
   const base = normalizeBaseUrl(input.artifactsBaseUrl);
   const ext = extForBrowser(input.browser);
@@ -201,7 +200,9 @@ export async function runArtifacts(
       enrichCheck({
         id: "download-manifest",
         ok: false,
-        detail: `Artifact manifest could not be fetched; digest resolution falls back to a weaker source: ${errorMessage(e)}`,
+        detail: pinned
+          ? `Artifact manifest could not be fetched; expectedSha256 is pinned, so digest resolution does not depend on it: ${errorMessage(e)}`
+          : `Artifact manifest could not be fetched; digest resolution falls back to a weaker source: ${errorMessage(e)}`,
       }),
     );
   }
@@ -209,16 +210,29 @@ export async function runArtifacts(
   let sha256: string | undefined;
   if (zipBuf) {
     sha256 = crypto.createHash("sha256").update(zipBuf).digest("hex");
-    const declared =
-      parseExpectedHex(input.expectedSha256) ??
-      parseManifestDigest(manifestJson) ??
-      parseDeclaredDigest(metadataJson);
-    if (declared) {
-      const computedB64 = crypto
-        .createHash("sha256")
-        .update(zipBuf)
-        .digest("base64");
+    let declared: DeclaredDigest | null = null;
+    let unusable: string | undefined;
+    try {
+      declared =
+        parseExpectedHex(input.expectedSha256) ??
+        parseManifestDigest(manifestJson) ??
+        parseDeclaredDigest(metadataJson);
+    } catch (e: unknown) {
+      unusable = errorMessage(e);
+    }
+    if (unusable) {
+      checks.push(
+        enrichCheck({
+          id: "package-integrity",
+          ok: false,
+          actual: sha256,
+          detail: `Declared digest is unusable: ${unusable}`,
+        }),
+      );
+    } else if (declared) {
+      const computedB64 = Buffer.from(sha256, "hex").toString("base64");
       const expectedStr = declared.hex ?? `sha256-${declared.b64}`;
+      const actualStr = declared.hex ? sha256 : `sha256-${computedB64}`;
       const match = declared.hex
         ? declared.hex === sha256
         : declared.b64 === computedB64;
@@ -227,12 +241,10 @@ export async function runArtifacts(
           id: "package-integrity",
           ok: match,
           expected: expectedStr,
-          actual: declared.hex ? sha256 : `sha256-${computedB64}`,
+          actual: actualStr,
           detail: match
             ? undefined
-            : `Package digest mismatch: expected ${expectedStr}, got ${
-                declared.hex ? sha256 : `sha256-${computedB64}`
-              }.`,
+            : `Package digest mismatch: expected ${expectedStr}, got ${actualStr}.`,
         }),
       );
     } else if (input.requireDigest) {

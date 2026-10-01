@@ -1,14 +1,28 @@
 # Changelog
 
-## 1.0.0
+## 0.5.2
 
-The package moves to Apache-2.0.
+Report honesty release: the artifact manifest fetch can no longer fail
+silently, and the documented URLs now match the ones the code builds. The
+package also moves to Apache-2.0.
+
+### Added
+
+- **A failed artifact manifest fetch is now a reported check.** The fetch
+  used to swallow every rejection, so the report listed `urls.manifest` as
+  if it had been consulted while the highest-priority registry-declared
+  digest source vanished without a trace. Every run now emits a
+  `download-manifest` check: `warn` level, so `requireDigest` semantics and
+  the gate verdict are unchanged, with the fetch error in `detail` and a
+  note that digest resolution fell back to a weaker source.
+- Documented `EXTENSIONDEV_ARTIFACTS_BASE_URL`, which the CLI has honored
+  as the `--base-url` fallback all along.
 
 ### Changed
 
 - **License: MIT is now Apache-2.0.** Everything published up to and
   including 0.5.1 was released under MIT and stays MIT forever; you keep
-  those rights on those versions. From 1.0.0 forward the license is
+  those rights on those versions. From 0.5.2 forward the license is
   Apache-2.0, which adds an express patent grant. Installing this package
   and using it to verify artifacts is unaffected.
 
@@ -23,26 +37,6 @@ The package moves to Apache-2.0.
   the refusal first and keeps the missing-artifact advice for every other
   failure. `detail` already carried `HTTP 401 Unauthorized`, so nothing new is
   reported; only the sentence changed.
-
-## 0.5.2
-
-Report honesty release: the artifact manifest fetch can no longer fail
-silently, and the documented URLs now match the ones the code builds.
-
-### Added
-
-- **A failed artifact manifest fetch is now a reported check.** The fetch
-  used to swallow every rejection, so the report listed `urls.manifest` as
-  if it had been consulted while the highest-priority registry-declared
-  digest source vanished without a trace. Every run now emits a
-  `download-manifest` check: `warn` level, so `requireDigest` semantics and
-  the gate verdict are unchanged, with the fetch error in `detail` and a
-  note that digest resolution fell back to a weaker source.
-- Documented `EXTENSIONDEV_ARTIFACTS_BASE_URL`, which the CLI has honored
-  as the `--base-url` fallback all along.
-
-### Fixed
-
 - **README example URLs now match the code.** The report example pointed at
   `artifacts.extension.land`, a host this package does not control, and
   omitted the `/builds/` path segment the runner emits. Every documented URL

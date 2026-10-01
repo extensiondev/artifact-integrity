@@ -79,11 +79,11 @@ extension-artifact-integrity \
   --out /abs/path/to/artifact-integrity.json
 ```
 
-`--expected-sha256`, `--require-digest`, and `--token` are optional. `--expected-sha256` and `--token` also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables, and `--require-digest` from `EXTENSIONDEV_REQUIRE_DIGEST=1`. `--base-url` is optional as well: it reads from the `EXTENSIONDEV_ARTIFACTS_BASE_URL` environment variable and defaults to `https://registry.extension.land`.
+`--expected-sha256`, `--require-digest`, `--token`, and `--timeout-ms` are optional. `--expected-sha256` and `--token` also read from the `EXTENSIONDEV_EXPECTED_SHA256` and `EXTENSION_DEV_TOKEN` environment variables, and `--require-digest` from `EXTENSIONDEV_REQUIRE_DIGEST=1`. `--timeout-ms` is the per-request budget in milliseconds and defaults to `15000`; it must be a positive number. `--base-url` is optional as well: it reads from the `EXTENSIONDEV_ARTIFACTS_BASE_URL` environment variable and defaults to `https://registry.extension.land`. A flag the CLI does not recognise is an error, so a misspelled `--require-digest` cannot silently weaken the gate.
 
 ## Output
 
-- **stdout**: `Wrote <OUTPUT_PATH>`
+- **stdout**: `⏵⏵⏵ integrity Wrote <OUTPUT_PATH>` (ANSI colour only when stdout is a terminal or `FORCE_COLOR` is set, never with `NO_COLOR`)
 - **side effect**: writes a JSON result file (default: `./artifact-integrity.json`)
 - **exit code**: `0` when the gate passes, `1` on failure or error
 
@@ -94,7 +94,7 @@ The gate is defined by severity, not by a raw boolean: a run is `ok: false` only
 Top-level shape (public-safe):
 
 ```ts
-type ArtifactIntegrityReport = {
+type RunArtifactsResult = {
   ok: boolean;
   browser: string;
   // SHA-256 (hex) of the downloaded package archive, when bytes were retrieved.
@@ -130,7 +130,7 @@ type ArtifactIntegrityReport = {
 
 Checks may include optional metadata fields (`title`, `level`, `summary`, `remediation`, `expected`, `actual`) to make reports more actionable.
 
-`download-manifest` records the fetch of the artifact manifest at `urls.manifest`, the highest-priority registry-declared digest source. It carries `level: "warn"`: when the fetch fails, digest resolution falls back to the weaker metadata digest (or, with `requireDigest`, `package-integrity` still fails closed), and the report shows the fetch error instead of silently listing a URL that was never read.
+`download-manifest` records the fetch of the artifact manifest at `urls.manifest`, the highest-priority registry-declared digest source. It carries `level: "warn"`: when the fetch fails, digest resolution falls back to the weaker metadata digest (or, with `requireDigest`, `package-integrity` still fails closed), and the report shows the fetch error instead of silently listing a URL that was never read. With a pinned `expectedSha256` the check says so instead, since resolution never depended on the fetch. A digest that is present but malformed in the manifest or metadata is never skipped over: `package-integrity` fails closed and names the field.
 
 Maxed-out JSON example:
 

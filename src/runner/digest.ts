@@ -9,10 +9,16 @@
 export type DeclaredDigest = { hex?: string; b64?: string };
 
 export function parseExpectedHex(value?: string): DeclaredDigest | null {
-  const v = String(value || "")
-    .trim()
-    .toLowerCase();
+  const v = (value ?? "").trim().toLowerCase();
   return /^[a-f0-9]{64}$/.test(v) ? { hex: v } : null;
+}
+
+function hexDigest(value: string, source: string): DeclaredDigest {
+  const v = value.trim().toLowerCase();
+  if (/^[a-f0-9]{64}$/.test(v)) return { hex: v };
+  throw new Error(
+    `${source} is present but is not a 64-character hex SHA-256; refusing to fall back to a weaker source.`,
+  );
 }
 
 export function parseDeclaredDigest(meta: unknown): DeclaredDigest | null {
@@ -24,15 +30,13 @@ export function parseDeclaredDigest(meta: unknown): DeclaredDigest | null {
       ? (obj as Record<string, unknown>).sha256
       : undefined;
   };
-  for (const c of [
-    m.sha256,
-    m.checksum,
-    nested("artifact"),
-    nested("package"),
-  ]) {
-    if (typeof c === "string" && /^[a-f0-9]{64}$/i.test(c.trim())) {
-      return { hex: c.trim().toLowerCase() };
-    }
+  for (const [source, c] of [
+    ["sha256", m.sha256],
+    ["checksum", m.checksum],
+    ["artifact.sha256", nested("artifact")],
+    ["package.sha256", nested("package")],
+  ] as const) {
+    if (typeof c === "string") return hexDigest(c, `Metadata ${source}`);
   }
   if (typeof m.integrity === "string") {
     const match = m.integrity.trim().match(/^sha256-([A-Za-z0-9+/=]+)$/);
@@ -52,7 +56,7 @@ export function parseManifestDigest(manifest: unknown): DeclaredDigest | null {
     zip && typeof zip === "object"
       ? (zip as Record<string, unknown>).sha256
       : undefined;
-  return typeof sha === "string" && /^[a-f0-9]{64}$/i.test(sha.trim())
-    ? { hex: sha.trim().toLowerCase() }
+  return typeof sha === "string"
+    ? hexDigest(sha, "Artifact manifest files.zip.sha256")
     : null;
 }

@@ -6,9 +6,7 @@
 // ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝      ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝
 // Apache License 2.0 (c) 2026 Cezar Augusto and the extension.dev collaborators
 
-import type { RunArtifactsResult } from "../types";
-
-type Check = RunArtifactsResult["checks"][number];
+import type { Check } from "../types";
 
 export function enrichCheck(check: Check): Check {
   switch (check.id) {
@@ -75,7 +73,9 @@ export function enrichCheck(check: Check): Check {
         level: check.level ?? "fail",
         ...check,
       };
-    default:
-      return check;
+    default: {
+      const unhandled: never = check.id;
+      throw new Error(`Unhandled check id: ${String(unhandled)}`);
+    }
   }
 }

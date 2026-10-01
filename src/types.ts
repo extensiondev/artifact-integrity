@@ -6,14 +6,16 @@
 // ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝      ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝
 // Apache License 2.0 (c) 2026 Cezar Augusto and the extension.dev collaborators
 
-export type Browser = "chrome" | "firefox" | "edge" | "safari";
+export const SUPPORTED_BROWSERS = ["chrome", "firefox", "edge"] as const;
+
+export type Browser = (typeof SUPPORTED_BROWSERS)[number];
 
 export type RunArtifactsInput = {
   artifactsBaseUrl: string;
   owner: string;
   repo: string;
   sha: string;
-  browser: Exclude<Browser, "safari">;
+  browser: Browser;
   timeoutMs?: number;
 
   token?: string;

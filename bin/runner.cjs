@@ -10,10 +10,13 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const _c =
+const _tty = (stream) =>
   !("NO_COLOR" in process.env) &&
-  (process.stderr.isTTY || "FORCE_COLOR" in process.env);
-const _w = (o, c) => (t) => (_c ? `\x1b[${o}m${t}\x1b[${c}m` : t);
+  (stream.isTTY || "FORCE_COLOR" in process.env);
+const _w =
+  (o, c) =>
+  (t, stream = process.stderr) =>
+    _tty(stream) ? `\x1b[${o}m${t}\x1b[${c}m` : t;
 const _green = _w(32, 39);
 const _red = _w(31, 39);
 const _blue = _w(34, 39);
@@ -28,10 +31,21 @@ function parseArgs(argv) {
     else if (a === "--sha") out.sha = argv[++i];
     else if (a === "--browser") out.browser = argv[++i];
     else if (a === "--out") out.out = argv[++i];
-    else if (a === "--timeout-ms") out.timeoutMs = Number(argv[++i]);
-    else if (a === "--token") out.token = argv[++i];
+    else if (a === "--timeout-ms") {
+      out.timeoutMs = Number(argv[++i]);
+      if (!Number.isFinite(out.timeoutMs) || out.timeoutMs <= 0) {
+        throw new Error(
+          `--timeout-ms must be a positive number of milliseconds, got ${JSON.stringify(argv[i])}\nNext step: pass --timeout-ms 15000 or omit the flag to use the default.`,
+        );
+      }
+    } else if (a === "--token") out.token = argv[++i];
     else if (a === "--expected-sha256") out.expectedSha256 = argv[++i];
     else if (a === "--require-digest") out.requireDigest = true;
+    else {
+      throw new Error(
+        `Unknown flag: ${a}\nNext step: check the spelling against the flags in the README; the gate refuses arguments it does not understand.`,
+      );
+    }
   }
   return out;
 }
@@ -78,13 +92,19 @@ async function main() {
   });
 
   fs.writeFileSync(outFile, JSON.stringify(result, null, 2) + "\n", "utf8");
-  console.log(`${_green("⏵⏵⏵")} ${_blue("integrity")} Wrote ${outFile}`);
+  console.log(
+    `${_green("⏵⏵⏵", process.stdout)} ${_blue("integrity", process.stdout)} Wrote ${outFile}`,
+  );
   process.exit(result.ok ? 0 : 1);
 }
 
-main().catch((err) => {
-  console.error(
-    `${_red("ERROR")} ${_blue("integrity")} ${err?.message || String(err)}`,
-  );
-  process.exit(1);
-});
+module.exports = { parseArgs };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(
+      `${_red("ERROR")} ${_blue("integrity")} ${err?.message || String(err)}`,
+    );
+    process.exit(1);
+  });
+}

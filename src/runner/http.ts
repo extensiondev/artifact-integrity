@@ -21,7 +21,7 @@ function authHeaders(
   url: string,
   token: string | undefined,
 ): Record<string, string> {
-  const trimmed = String(token || "").trim();
+  const trimmed = (token ?? "").trim();
   if (!trimmed) return {};
 
   if (!isHttps(url)) {
@@ -31,15 +31,15 @@ function authHeaders(
 }
 
 async function readCapped(res: Response, maxBytes: number): Promise<Buffer> {
-  const declared = Number(res.headers?.get?.("content-length"));
+  const declared = Number(res.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maxBytes) {
     throw new Error(
       `Response body is ${declared} bytes, over the ${maxBytes}-byte cap.`,
     );
   }
 
-  const body = (res as { body?: ReadableStream<Uint8Array> | null }).body;
-  if (!body || typeof body.getReader !== "function") {
+  const body = res.body;
+  if (!body) {
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length > maxBytes) {
       throw new Error(
@@ -74,7 +74,10 @@ async function request<T>(
   read: (res: Response) => Promise<T>,
 ): Promise<T> {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
+  const t = setTimeout(
+    () => controller.abort(new Error(`Timed out after ${timeoutMs}ms`)),
+    timeoutMs,
+  );
 
   try {
     const res = await fetch(url, {
@@ -115,7 +118,7 @@ export function fetchJson(
     try {
       return JSON.parse(text);
     } catch {
-      const ct = res.headers?.get?.("content-type") || "unknown content-type";
+      const ct = res.headers.get("content-type") || "unknown content-type";
       throw new Error(
         `Expected JSON but received ${ct} (likely a soft-404 or error page).`,
       );
