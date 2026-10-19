@@ -73,7 +73,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "adm-zip": "^0.6.0"
+    "adm-zip": "^0.6.1"
   },
   "peerDependencies": {},
   "peerDependenciesMeta": {},
