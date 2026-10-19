@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0
+
+Upload receipt release: a report can now say that integrity was proven at
+upload time, and the reader accepts both report shapes.
+
+### Added
+
+- **`verifyUploadReceipt`** compares the receipt a registry returned for an
+  upload (a `sha256`, an `etag-md5` or an `etag-sha256`) with the local
+  record of the bytes that were sent, and answers a `ReceiptVerification`
+  naming the receipt kind and whether it matched. A build lane proves
+  integrity with it and never downloads its own artifacts back.
+- **`readIntegrityReport`** reads a stored `artifact-integrity/<browser>.json`
+  of either shape: the new upload-receipt report (`verification:
+  "upload-receipt"`, per-artifact receipts, `checkedAt`, `runId`) or the
+  older download report, and answers `null` for anything else.
+- Types `IntegrityVerification`, `ReceiptKind`, `UploadRecord`,
+  `UploadReceipt`, `ReceiptVerification`, `IntegrityReportArtifact` and
+  `IntegrityReport` are exported.
+
+### Changed
+
+- `adm-zip` moves to 0.6.1, past the high advisory that kept the audit red.
+
 ## 0.5.2
 
 Report honesty release: the artifact manifest fetch can no longer fail
