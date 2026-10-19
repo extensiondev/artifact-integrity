@@ -10,6 +10,16 @@ import pkg from "../package.json";
 export const version: string = pkg.version;
 
 export { runArtifacts } from "./runner";
+export { readIntegrityReport, verifyUploadReceipt } from "./upload-receipt";
+export type {
+  IntegrityReport,
+  IntegrityReportArtifact,
+  IntegrityVerification,
+  ReceiptKind,
+  ReceiptVerification,
+  UploadReceipt,
+  UploadRecord,
+} from "./upload-receipt";
 export type {
   RunArtifactsInput,
   RunArtifactsResult,
