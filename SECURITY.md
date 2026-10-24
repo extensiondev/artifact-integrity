@@ -12,7 +12,7 @@ requests.
 
 - Preferred: open a private advisory through GitHub, under the repository's
   **Security** tab, using "Report a vulnerability".
-- Alternatively, email boss@cezaraugusto.net.
+- Alternatively, email hello@extension.dev.
 
 Include the affected version, a description of the issue, and a minimal
 reproduction if you have one. You will get an acknowledgement, and once a fix
