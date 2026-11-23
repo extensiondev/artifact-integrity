@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1
+
+Maintenance release. No API change.
+
+- The README badges use a light label and a dark value, the extension.dev
+  black and white brand.
+- The security contact is hello@extension.dev.
+- vite, vitest, postcss and the eslint helpers are patched past their
+  advisories, minimatch moves to the 11.0.1 line, and every pnpm override
+  lives in `package.json`, where pnpm 10.19 reads it.
+
 ## 0.6.0
 
 Upload receipt release: a report can now say that integrity was proven at
